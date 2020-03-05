@@ -514,14 +514,9 @@ Requirement :
 
 1. [Install IIS Serveur](#TP01-Installation-and-configuration-of-IIS-server) the windows serveur backup isn't required
 
-2. Create groups
-    * Directeur
-    * Ingénieur
-    * Comptable
+2. Create users and groups
 
-    Open Active Directory Users and Computers, expand SRW3.Example, rigth click on user folder, click on new and click on group.
-
-3. Create Users
+    > users to add
 
     | LastName | FirstName | Group     | Login   | Password     |
     |---------:|----------:|----------:|--------:|-------------:|
@@ -532,14 +527,50 @@ Requirement :
     | DIOCY    | Kelly     | Ingénieur | kdiocy  | Edcrfv123456 |
     | Clients  |           |           | dclient | Tgbzhn123456 |
 
-    To create a new user, Open Active Directory Users and Computers, expand SRW3.Example, rigth click on user folder, click on new and click on user.
+    Open Powershell with administrator privileges and paste the next lines to create users and groups 😉
 
-    Open Powershell with administrator privileges and paste 
-    ```Powershell
-    Import-Module ActiveDirectory
-    Add-ADGroupMember -Identity "Ingénieur"  -Members "jdeuf","kdiocy","jbricot"
-    Add-ADGroupMember -Identity "Comptable"  -Members "massain"
-    Add-ADGroupMember -Identity "Directeur"  -Members "mdupont"
+    ```Powershell    
+        Import-Module ActiveDirectory
+
+        $users = @(
+        @{lastname = "DUPONT"; firstname = "Marcel"; group = "Directeur"; login = "mdupont"; password = "Qwertz123456"},
+        @{lastname = "BRICOT"; firstname = "Juda"; group = "Ingénieur"; login = "jbricot"; password = "Asdfgh123456"},
+        @{lastname = "ASSAIN"; firstname = "Marc"; group = "Comptable"; login = "massain"; password = "Yxcvbn123456"},
+        @{lastname = "DEUF"; firstname = "John"; group = "Ingénieur"; login = "jdeuf"; password = "Qaywsx123456"},
+        @{lastname = "DIOCY"; firstname = "Kelly"; group = "Ingénieur"; login = "kdiocy"; password = "Edcrfv123456"},
+        @{lastname = "Clients"; firstname = ""; group = ""; login = "dclient"; password = "Tgbzhn123456"}
+        )
+
+
+
+        foreach($user in $users)
+        {
+            $login = $user.login
+            $lastname = $user.lastname
+            $firstname = $user.firstname
+            $password = $user.password
+            $group = $user.group
+
+            New-ADUser `
+            -SamAccountName $login `
+            -UserPrincipalName "$login@srw3.example" `
+            -Name "$firstname $lastname" `
+            -GivenName $firstname `
+            -Surname $lastname `
+            -Enabled $True `
+            -ChangePasswordAtLogon $False `
+            -DisplayName "$firstname $lastname" `
+            -AccountPassword (convertto-securestring $password -AsPlainText -Force)
+            if([string]::IsNullOrEmpty($group))
+            {
+                $GroupExists = Get-ADGroup -Filter {Name -eq $group}
+                if([string]::IsNullOrEmpty($GroupExists))
+                {
+                    New-ADGroup -Name $group –groupscope Global
+                }
+                Add-ADGroupMember -Identity $group -Members $login 
+            }
+        }
     ```
 
 ## Create Sites
