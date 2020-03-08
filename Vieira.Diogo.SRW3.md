@@ -502,13 +502,14 @@ If Digest Authentication isn't visible, close and reopen IIS. Digest is now avai
 
 # TP 04 Create an intranet and internet services
 
-Requirement : 
-    2 Network Cards
-        - 1 Bridge
-        - 1 Nat
-    Define statics IP:
-        - Bridge: 10.229.34.74
-        - Intranet: 192.168.178.135
+Requirement :  
+
+    2 Network Cards  
+        - 1 Bridge  
+        - 1 Nat  
+    Define statics IP:  
+        - Bridge: 10.229.34.74  
+        - Intranet: 192.168.178.135  
 
 ## Create groups and users
 
@@ -561,7 +562,7 @@ Requirement :
             -ChangePasswordAtLogon $False `
             -DisplayName "$firstname $lastname" `
             -AccountPassword (convertto-securestring $password -AsPlainText -Force)
-            if([string]::IsNullOrEmpty($group))
+            if(![string]::IsNullOrEmpty($group))
             {
                 $GroupExists = Get-ADGroup -Filter {Name -eq $group}
                 if([string]::IsNullOrEmpty($GroupExists))
@@ -602,7 +603,7 @@ mkdir C:/SRW/internet,C:/SRW/intranet,C:/SRW/intranet/dclient
         <body>
             Mon intranet
         </body>
-    </html>' > C:/SRW/intranet/index.html
+    </html>' > C:/SRW/internet/index.html
 '<!DOCTYPE html>
     <html lang="en">
         <head>
@@ -614,7 +615,7 @@ mkdir C:/SRW/internet,C:/SRW/intranet,C:/SRW/intranet/dclient
         <body>
             Mon dclient
         </body>
-    </html>' > C:/SRW/intranet/dclient/index.html
+    </html>' > C:/SRW/internet/dclient/index.html
 
 C:\windows\system32\inetsrv\appcmd add site /name:"Internet" /bindings:"http/10.229.34.74:80:" /physicalPath:"C:\SRW\internet"
 
@@ -631,8 +632,83 @@ C:\windows\system32\inetsrv\appcmd add vdir /app.name:"Intranet/" /path:/interne
 C:\windows\system32\inetsrv\appcmd add vdir /app.name:"Internet/" /path:/intranet /physicalPath:"C:\SRW\intranet"
 ```
 
-[Install Digest](###-Use-digest-on-private-site)
+## security of clients's directory
 
-Open IIS Manager, ... a activer digest pour dclient
+- Right click in `C:\SRW` and click on Properties.
+    1. In Security pane, click on advanced button.
+        1. Click on `Disable inheritance`
+        2. In the pop-up, click on `Convert inherited permissions into explicit permissions on this object`
+        3. Remove Users
+        4. Click on Add button
+        5. In the new pop-up click on `Select a pricipal` on the top of page.
+            1. Search `Ingenieur` and click on Check Names and click ok.
+            2. Tick the next cases:  
+                Modify,  
+                Write  
+            3. Click on OK.
+            4. repeat the step for `IIS_IUSRS`, but no add other permissions
+- Right click in `C:\SRW\internet\dclient` and click on Properties.
+    1. In Security pane, click on edit button.
+    2. Click on Add button of the new page.
+    3. search `dclient` and click on Check Names and click ok.
+    4. on the bottom part of the `Permissions for dclient` page tick write and modify checkboxes.
 
-## SSL
+If you want to create a share drive for your engineer you have to make a right click on `C:\SRW` and on sharing pane click on share and remove all groups except Ingénieur.
+Now you can share the share path.
+
+## secure your network access
+
+### Basic authentication and URL Authorization
+
+**Basic authentication**  
+You can use SSL encryption in combination with Basic authentication to help secure user account information transmitted across the Internet or a corporate network. - [Microsoft](https://docs.microsoft.com/en-us/iis/configuration/system.webserver/security/authentication/basicauthentication)
+
+**URL Authorization**  
+Add rules to access a specific element of the url
+
+**How to install**  
+1. Open Server Manager
+2. Add a new Role 
+3. Web Server (IIS) 
+    1. Web Server 
+    2. Security 
+        * tick :  
+            URL Authorization,  
+            Basic Authentication
+
+
+Now close and reopen IIS Manage.
+A new element with the name `Authoritation Rules` on IIS Section is visible on `internet/dclients`, open it.
+
+1. Delete all elements visible.
+2. on the right menu:
+    - `Add Deny Rule...`
+        * Tick `Anonymous Users`
+        * click ok
+    - `Add Allow Rule...`
+        * Tick `Specific roles or user groups`
+        * write `Ingénieur`
+        * click ok
+    - `Add Allow Rule...`
+        * Tick `Specific users`
+        * write `dclient`
+        * click ok
+
+You have given access to the client folder only for members of the Engineer group and the client user. Other users cannot access the customer page!
+
+Go to `intranet` folder of `Internet` site and open `Authoritation Rules`.  
+
+1. Delete all elements visible.
+2. on the right menu:
+    - `Add Deny Rule...`  
+        * Tick `Anonymous Users`  
+        * click ok  
+
+You have restricted access to the intranet only for all authenticated users
+
+We have to `add Basic Authentication` to ask credentials to user when he write the next urls:  
+ `10.229.34.74/dclient`, `10.229.34.74/intranet` or `10.192.168.178.135/internet/dclient`
+
+Go to IIS manager and click on the `dclient folder` of Internet site.
+click on `Authentication` in IIS section and `Enable` the `Basic Authentication`.  
+Repeat the step for `intranet folder` of Internet site
