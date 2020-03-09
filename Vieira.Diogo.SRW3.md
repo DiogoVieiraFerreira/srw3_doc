@@ -530,7 +530,7 @@ Requirement :
 
     Open Powershell with administrator privileges and paste the next lines to create users and groups 😉
 
-    ```Powershell    
+    ```powershell
         Import-Module ActiveDirectory
 
         $users = @(
@@ -579,7 +579,7 @@ Requirement :
 Open powershell with administrator privileges and past the next command:
 ```powershell
 # copy and past in powershell
-mkdir C:/SRW/internet,C:/SRW/intranet,C:/SRW/intranet/dclient
+mkdir C:/SRW/internet,C:/SRW/intranet,C:/SRW/internet/dclient
 '<!DOCTYPE html>
     <html lang="en">
         <head>
