@@ -751,6 +751,8 @@ Open Authentication, `disable` Anonymous Authentication and `enable` Basic Authe
 Open `Authorization Rules` remove all rules, click on `Add Deny  Rule...` and deny `Anonymous Users`.  
 For each user folder, open `Authorization Rules` and remove all rules then add specific user  by clickin on `Add Allow  Rule...`.
 
+Go to `C:\SRW\Intranet\Users`, right click properties, click advanced in security pane and disable inheritance, click `convert inherited...` and delete Ingénieur.
+
 ## IIS managment by engineer
 
 1. Open Server Manager
@@ -761,4 +763,27 @@ For each user folder, open `Authorization Rules` and remove all rules then add s
         * tick :  
             Management Service
 
-close and reopen IIS manager and go to Internet site.  
+Close and reopen IIS manager and go to Internet site.  
+Open Internet Site and open `IIS Manager Permissions` in Management pane.
+1. Click on `Allow User...` on the right page.
+2. Write `Ingénieur` and click ok
+
+Open `Active Directory Users and Computers`, open SRW3.Example/Users and search Ingénieur group.  
+Add `Server Operators` in `Member of` pane.
+
+## SSL 
+
+Open IIS, click in your server and click on `Server Certificates` on IIS pane.  
+Click on `Create Self-Signed Certificate` on the right panel.  
+Write `Web Hosting` and replace personnal to web hosting.
+
+on each site:  
+1. right click 
+2. Edit Bindings...  
+    * Add
+    * https
+        * put the good ip
+    * SSL certificate: `Web Hosting`
+3. click on SSL Settigns of IIS pane
+    * tick Require SSL
+Your sites have now https !
