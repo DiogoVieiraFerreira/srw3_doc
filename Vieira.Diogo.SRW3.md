@@ -508,7 +508,7 @@ Requirement :
         - 1 Bridge  
         - 1 Nat  
     Define statics IP:  
-        - Bridge: 10.229.34.74  
+        - Bridge: 10.229.33.53  
         - Intranet: 192.168.178.135  
 
 ## Create groups and users
@@ -603,7 +603,7 @@ mkdir C:/SRW/internet,C:/SRW/intranet,C:/SRW/internet/dclient
         <body>
             Mon intranet
         </body>
-    </html>' > C:/SRW/internet/index.html
+    </html>' > C:/SRW/intranet/index.html
 '<!DOCTYPE html>
     <html lang="en">
         <head>
@@ -617,7 +617,7 @@ mkdir C:/SRW/internet,C:/SRW/intranet,C:/SRW/internet/dclient
         </body>
     </html>' > C:/SRW/internet/dclient/index.html
 
-C:\windows\system32\inetsrv\appcmd add site /name:"Internet" /bindings:"http/10.229.34.74:80:" /physicalPath:"C:\SRW\internet"
+C:\windows\system32\inetsrv\appcmd add site /name:"Internet" /bindings:"http/10.229.33.53:80:" /physicalPath:"C:\SRW\internet"
 
 C:\windows\system32\inetsrv\appcmd set config "Internet" /section:defaultDocument /enabled:true /~files "/+files.[value='index.html']"
 
@@ -700,8 +700,8 @@ Go to `intranet` folder of `Internet` site and open `Authoritation Rules`.
 
 1. Delete all elements visible.
 2. on the right menu:
-    - `Add Deny Rule...`  
-        * Tick `Anonymous Users`  
+    - `Add Allow Rule...`  
+        * Tick `All Users`  
         * click ok  
 
 You have restricted access to the intranet only for all authenticated users
@@ -709,6 +709,56 @@ You have restricted access to the intranet only for all authenticated users
 We have to `add Basic Authentication` to ask credentials to user when he write the next urls:  
  `10.229.34.74/dclient`, `10.229.34.74/intranet` or `10.192.168.178.135/internet/dclient`
 
-Go to IIS manager and click on the `dclient folder` of Internet site.
-click on `Authentication` in IIS section and `Enable` the `Basic Authentication`.  
+Go to IIS manager and click on the `dclient folder` and `intranet folder` of Internet site.
+click on `Authentication` in IIS section and `Enable` the `Basic Authentication` and disable Anonymous Authentication.  
 Repeat the step for `intranet folder` of Internet site
+
+## create intraner users' folders
+
+```powershell
+$userPath = C:\SRW\intranet\Users
+
+$users = @(
+    @{login = "mdupont"},
+    @{login = "jbricot"},
+    @{login = "massain"},
+    @{login = "jdeuf"},
+    @{login = "kdiocy"}
+)
+
+foreach($user in $users)
+{
+    $login = $user.login
+    mkdir $userPath\$login
+
+    "<!DOCTYPE html>
+    <html lang='en'>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <meta http-equiv='X-UA-Compatible' content='ie=edge'>
+            <title>$login</title>
+        </head>
+        <body>
+            $login
+        </body>
+    </html>" > $userPath\$login\index.html
+}
+```
+
+Open IIS go to `Users` folder of Intranet site.  
+Open Authentication, `disable` Anonymous Authentication and `enable` Basic Authentication.  
+Open `Authorization Rules` remove all rules, click on `Add Deny  Rule...` and deny `Anonymous Users`.  
+For each user folder, open `Authorization Rules` and remove all rules then add specific user  by clickin on `Add Allow  Rule...`.
+
+## IIS managment by engineer
+
+1. Open Server Manager
+2. Add a new Role 
+3. Web Server (IIS) 
+    1. Web Server 
+    2. Management Tools 
+        * tick :  
+            Management Service
+
+close and reopen IIS manager and go to Internet site.  
